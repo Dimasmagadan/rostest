@@ -10,6 +10,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 /**
  * Create demo data if it doesn't exist.
  *

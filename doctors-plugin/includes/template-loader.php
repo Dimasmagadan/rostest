@@ -8,6 +8,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 /**
  * Filter template hierarchy for doctors post type.
  *

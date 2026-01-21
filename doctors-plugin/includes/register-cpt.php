@@ -6,6 +6,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 /**
  * Register the 'doctors' custom post type.
  *
@@ -60,14 +64,3 @@ function doctors_register_cpt() {
 }
 
 add_action( 'init', 'doctors_register_cpt' );
-
-/**
- * Flush rewrite rules on plugin activation.
- *
- * @since 1.0.0 */
-function doctors_rewrite_flush() {
-    doctors_register_cpt();
-    flush_rewrite_rules();
-}
-
-register_activation_hook( __FILE__, 'doctors_rewrite_flush' );

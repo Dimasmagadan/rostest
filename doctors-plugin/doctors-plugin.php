@@ -24,6 +24,20 @@ require_once DOCTORS_PLUGIN_PATH . 'includes/archive-filter.php';
 add_action( 'plugins_loaded', 'doctors_plugin_init' );
 
 /**
+ * Flush rewrite rules on plugin activation.
+ *
+ * @since 1.0.0
+ */
+function doctors_rewrite_flush() {
+    if ( function_exists( 'doctors_register_cpt' ) ) {
+        doctors_register_cpt();
+        flush_rewrite_rules();
+    }
+}
+
+register_activation_hook( __FILE__, 'doctors_rewrite_flush' );
+
+/**
  * Initialize plugin textdomain for translations.
  *
  * @since 1.0.0

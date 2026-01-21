@@ -32,6 +32,11 @@ function doctors_archive_filters( $query ) {
             $query->set( 'tax_query', array( $tax_query ) );
         }
 
+        $allowed_sorts = array( 'rating_desc', 'price_asc', 'experience_desc' );
+        if ( ! in_array( $sort, $allowed_sorts, true ) ) {
+            $sort = '';
+        }
+
         switch ( $sort ) {
             case 'rating_desc':
                 $query->set( 'meta_key', '_doctors_rating' );
@@ -88,6 +93,11 @@ function doctors_get_filtered_posts() {
         );
     }
 
+    $allowed_sorts = array( 'rating_desc', 'price_asc', 'experience_desc' );
+    if ( ! in_array( $sort, $allowed_sorts, true ) ) {
+        $sort = '';
+    }
+
     switch ( $sort ) {
         case 'rating_desc':
             $args['meta_key'] = '_doctors_rating';
@@ -103,10 +113,6 @@ function doctors_get_filtered_posts() {
             $args['meta_key'] = '_doctors_experience';
             $args['orderby']  = 'meta_value_num';
             $args['order']    = 'DESC';
-            break;
-        default:
-            $args['orderby'] = 'date';
-            $args['order']   = 'DESC';
             break;
     }
 
@@ -130,7 +136,7 @@ function doctors_pagination( $query = null, $base_url = '' ) {
 
     $base_url = empty( $base_url ) ? get_permalink( get_option( 'page_for_posts' ) ) : $base_url;
 
-    $get_params = $_GET;
+    $get_params = array_map( 'sanitize_text_field', wp_unslash( $_GET ) );
     unset( $get_params['paged'] );
 
     $query_string = http_build_query( $get_params );

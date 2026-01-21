@@ -1,11 +1,14 @@
 <?php
 /**
  * Archive Doctors Template
+ *
+ * Uses standard WordPress loop with pre_get_posts filtering.
+ *
+ * @package DoctorsPlugin
+ * @since 1.0.0
  */
 
 get_header();
-
-$doctors_query = doctors_get_filtered_posts();
 ?>
 
 <div class="doctors-archive-container">
@@ -16,11 +19,11 @@ $doctors_query = doctors_get_filtered_posts();
     <?php doctors_render_filters(); ?>
 
     <div class="doctors-archive-content">
-        <?php if ( $doctors_query->have_posts() ) : ?>
+        <?php if ( have_posts() ) : ?>
             <div class="doctors-grid">
                 <?php
-                while ( $doctors_query->have_posts() ) :
-                    $doctors_query->the_post();
+                while ( have_posts() ) :
+                    the_post();
                     ?>
                     <article id="post-<?php the_ID(); ?>" <?php post_class( 'doctor-card' ); ?>>
                         <div class="doctor-card-inner">
@@ -97,9 +100,7 @@ $doctors_query = doctors_get_filtered_posts();
                 ?>
             </div>
 
-            <?php doctors_pagination( $doctors_query ); ?>
-
-            <?php wp_reset_postdata(); ?>
+            <?php doctors_pagination(); ?>
 
         <?php else : ?>
             <div class="no-doctors-found">

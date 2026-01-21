@@ -1,8 +1,16 @@
 <?php
 /**
- * Register Custom Post Type: Doctors
+ * Doctors Plugin - Register Custom Post Type
+ *
+ * @package DoctorsPlugin
+ * @since 1.0.0
  */
 
+/**
+ * Register the 'doctors' custom post type.
+ *
+ * @since 1.0.0
+ */
 function doctors_register_cpt() {
     $labels = array(
         'name'                  => _x( 'Врачи', 'Post type general name', 'doctors-plugin' ),
@@ -53,6 +61,10 @@ function doctors_register_cpt() {
 
 add_action( 'init', 'doctors_register_cpt' );
 
+/**
+ * Flush rewrite rules on plugin activation.
+ *
+ * @since 1.0.0 */
 function doctors_rewrite_flush() {
     doctors_register_cpt();
     flush_rewrite_rules();

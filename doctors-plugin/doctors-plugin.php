@@ -23,6 +23,11 @@ require_once DOCTORS_PLUGIN_PATH . 'includes/archive-filter.php';
 
 add_action( 'plugins_loaded', 'doctors_plugin_init' );
 
+/**
+ * Initialize plugin textdomain for translations.
+ *
+ * @since 1.0.0
+ */
 function doctors_plugin_init() {
     load_plugin_textdomain( 'doctors-plugin', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 }

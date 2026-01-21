@@ -1,14 +1,22 @@
 <?php
 /**
- * Archive Filtering for Doctors CPT
- * Uses pre_get_posts for efficient filtering
+ * Doctors Plugin - Archive Filtering
+ *
+ * Uses pre_get_posts for efficient filtering.
  * GET parameters: specialization, city, sort
+ *
+ * @package DoctorsPlugin
+ * @since 1.0.0
  */
 
+/**
+ * Modify main query for doctors archive.
+ *
+ * @since 1.0.0
+ * @param WP_Query $query The main query object.
+ */
 function doctors_archive_filters( $query ) {
     if ( ! is_admin() && $query->is_main_query() && is_post_type_archive( 'doctors' ) ) {
-
-        $meta_query = array();
 
         $specialization = isset( $_GET['specialization'] ) ? sanitize_text_field( wp_unslash( $_GET['specialization'] ) ) : '';
         $city           = isset( $_GET['city'] ) ? sanitize_text_field( wp_unslash( $_GET['city'] ) ) : '';
@@ -65,85 +73,35 @@ function doctors_archive_filters( $query ) {
 
 add_action( 'pre_get_posts', 'doctors_archive_filters' );
 
-function doctors_get_filtered_posts() {
-    $args = array(
-        'post_type'      => 'doctors',
-        'posts_per_page' => 9,
-        'post_status'    => 'publish',
-    );
+/**
+ * Display pagination for doctors archive.
+ *
+ * Uses the main WordPress query.
+ *
+ * @since 1.0.0
+ * @param string $base_url The base URL for pagination links.
+ */
+function doctors_pagination( $base_url = '' ) {
+    global $wp_query;
 
-    $specialization = isset( $_GET['specialization'] ) ? sanitize_text_field( wp_unslash( $_GET['specialization'] ) ) : '';
-    $city           = isset( $_GET['city'] ) ? sanitize_text_field( wp_unslash( $_GET['city'] ) ) : '';
-    $sort           = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : '';
-    $paged          = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
-
-    if ( ! empty( $specialization ) ) {
-        $args['tax_query'][] = array(
-            'taxonomy' => 'specialization',
-            'field'    => 'slug',
-            'terms'    => $specialization,
-        );
-    }
-
-    if ( ! empty( $city ) ) {
-        $args['tax_query'][] = array(
-            'taxonomy' => 'city',
-            'field'    => 'slug',
-            'terms'    => $city,
-        );
-    }
-
-    $allowed_sorts = array( 'rating_desc', 'price_asc', 'experience_desc' );
-    if ( ! in_array( $sort, $allowed_sorts, true ) ) {
-        $sort = '';
-    }
-
-    switch ( $sort ) {
-        case 'rating_desc':
-            $args['meta_key'] = '_doctors_rating';
-            $args['orderby']  = 'meta_value_num';
-            $args['order']    = 'DESC';
-            break;
-        case 'price_asc':
-            $args['meta_key'] = '_doctors_price_from';
-            $args['orderby']  = 'meta_value_num';
-            $args['order']    = 'ASC';
-            break;
-        case 'experience_desc':
-            $args['meta_key'] = '_doctors_experience';
-            $args['orderby']  = 'meta_value_num';
-            $args['order']    = 'DESC';
-            break;
-    }
-
-    $args['paged'] = $paged;
-
-    return new WP_Query( $args );
-}
-
-function doctors_pagination( $query = null, $base_url = '' ) {
-    if ( empty( $query ) ) {
-        global $wp_query;
-        $query = $wp_query;
-    }
-
-    if ( $query->max_num_pages <= 1 ) {
+    if ( $wp_query->max_num_pages <= 1 ) {
         return;
     }
 
     $current_page = max( 1, get_query_var( 'paged' ) );
-    $total_pages  = $query->max_num_pages;
+    $total_pages  = $wp_query->max_num_pages;
 
-    $base_url = empty( $base_url ) ? get_permalink( get_option( 'page_for_posts' ) ) : $base_url;
+    if ( empty( $base_url ) ) {
+        $base_url = get_permalink( get_option( 'page_for_posts' ) );
+    }
 
     $get_params = array_map( 'sanitize_text_field', wp_unslash( $_GET ) );
     unset( $get_params['paged'] );
 
     $query_string = http_build_query( $get_params );
+    $base_url    .= '?' . $query_string;
     if ( ! empty( $query_string ) ) {
-        $base_url .= '?' . $query_string . '&';
-    } else {
-        $base_url .= '?';
+        $base_url .= '&';
     }
 
     echo '<nav class="doctors-pagination" aria-label="Pagination">';
@@ -169,6 +127,12 @@ function doctors_pagination( $query = null, $base_url = '' ) {
     echo '</nav>';
 }
 
+/**
+ * Get all specializations.
+ *
+ * @since 1.0.0
+ * @return array Array of WP_Term objects.
+ */
 function doctors_get_specializations() {
     $terms = get_terms( array(
         'taxonomy'   => 'specialization',
@@ -182,6 +146,12 @@ function doctors_get_specializations() {
     return $terms;
 }
 
+/**
+ * Get all cities.
+ *
+ * @since 1.0.0
+ * @return array Array of WP_Term objects.
+ */
 function doctors_get_cities() {
     $terms = get_terms( array(
         'taxonomy'   => 'city',
@@ -195,6 +165,11 @@ function doctors_get_cities() {
     return $terms;
 }
 
+/**
+ * Render filter form for doctors archive.
+ *
+ * @since 1.0.0
+ */
 function doctors_render_filters() {
     $current_specialization = isset( $_GET['specialization'] ) ? sanitize_text_field( wp_unslash( $_GET['specialization'] ) ) : '';
     $current_city           = isset( $_GET['city'] ) ? sanitize_text_field( wp_unslash( $_GET['city'] ) ) : '';

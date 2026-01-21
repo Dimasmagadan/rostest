@@ -1,8 +1,16 @@
 <?php
 /**
- * Register Taxonomies for Doctors CPT
+ * Doctors Plugin - Register Taxonomies
+ *
+ * @package DoctorsPlugin
+ * @since 1.0.0
  */
 
+/**
+ * Register the 'specialization' taxonomy.
+ *
+ * @since 1.0.0
+ */
 function doctors_register_specialization_taxonomy() {
     $labels = array(
         'name'              => _x( 'Специализации', 'taxonomy general name', 'doctors-plugin' ),
@@ -33,6 +41,11 @@ function doctors_register_specialization_taxonomy() {
 
 add_action( 'init', 'doctors_register_specialization_taxonomy' );
 
+/**
+ * Register the 'city' taxonomy.
+ *
+ * @since 1.0.0
+ */
 function doctors_register_city_taxonomy() {
     $labels = array(
         'name'              => _x( 'Города', 'taxonomy general name', 'doctors-plugin' ),

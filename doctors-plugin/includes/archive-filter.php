@@ -98,11 +98,10 @@ function doctors_pagination( $base_url = '' ) {
     $get_params = array_map( 'sanitize_text_field', wp_unslash( $_GET ) );
     unset( $get_params['paged'] );
 
-    $query_string = http_build_query( $get_params );
-    $base_url    .= '?' . $query_string;
-    if ( ! empty( $query_string ) ) {
-        $base_url .= '&';
+    if ( ! empty( $get_params ) ) {
+        $base_url = add_query_arg( $get_params, $base_url );
     }
+    $base_url = trailingslashit( $base_url ) . '?paged=';
 
     echo '<nav class="doctors-pagination" aria-label="Pagination">';
     echo '<ul class="page-numbers">';

@@ -1,1 +1,21 @@
 .vscode/
+
+# Docker
+.env
+docker-compose.override.yml
+
+# WordPress
+wp-content/uploads/*
+!wp-content/uploads/index.php
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log

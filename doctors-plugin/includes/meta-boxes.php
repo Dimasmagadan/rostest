@@ -193,27 +193,17 @@ function doctors_get_rating( $post_id = null ) {
  *
  * @since 1.0.0
  * @param float $rating Rating value (0-5).
- * @param int|null $post_id Post ID or null for current post.
  * @return string HTML output for rating stars.
  */
-function doctors_display_rating_stars( $rating, $post_id = null ) {
-    $rating = floatval( $rating );
-    $full_stars  = floor( $rating );
-    $half_star   = ( $rating - $full_stars ) >= 0.5 ? 1 : 0;
-    $empty_stars = 5 - $full_stars - $half_star;
+function doctors_display_rating_stars( $rating ) {
+    $rating     = floatval( $rating );
+    $full_stars = floor( $rating );
+    $half_star  = ( $rating - $full_stars ) >= 0.5;
+    $empty      = 5 - $full_stars - ( $half_star ? 1 : 0 );
 
-    $output = '<div class="doctor-rating">';
-    for ( $i = 0; $i < $full_stars; $i++ ) {
-        $output .= '<span class="dashicons dashicons-star-filled"></span>';
-    }
-    if ( $half_star ) {
-        $output .= '<span class="dashicons dashicons-star-half"></span>';
-    }
-    for ( $i = 0; $i < $empty_stars; $i++ ) {
-        $output .= '<span class="dashicons dashicons-star-empty"></span>';
-    }
-    $output .= '<span class="rating-value">' . esc_html( number_format( $rating, 1 ) ) . '</span>';
-    $output .= '</div>';
+    $stars  = str_repeat( '<span class="dashicons dashicons-star-filled"></span>', $full_stars );
+    $stars .= $half_star ? '<span class="dashicons dashicons-star-half"></span>' : '';
+    $stars .= str_repeat( '<span class="dashicons dashicons-star-empty"></span>', $empty );
 
-    return $output;
+    return '<div class="doctor-rating">' . $stars . '<span class="rating-value">' . esc_html( number_format( $rating, 1 ) ) . '</span></div>';
 }

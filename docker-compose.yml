@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:6.4-php8.2-apache
+    container_name: doctors-wp
+    restart: unless-stopped
+    ports:
+      - "${WP_PORT}:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - ./doctors-plugin/:/var/www/html/wp-content/plugins/doctors-plugin
+      - ./doctors-demo/doctors-demo-data.php:/var/www/html/wp-content/mu-plugins/doctors-demo-data.php
+      - wordpress_data:/var/www/html/wp-content
+    depends_on:
+      - db
+    networks:
+      - doctors-network
+
+  db:
+    image: mysql:8.0
+    container_name: doctors-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - doctors-network
+
+networks:
+  doctors-network:
+
+volumes:
+  wordpress_data:
+  db_data:

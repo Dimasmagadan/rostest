@@ -16,67 +16,94 @@
  * @param WP_Query $query The main query object.
  */
 function doctors_archive_filters( $query ) {
-    if ( ! is_admin() && $query->is_main_query() && is_post_type_archive( 'doctors' ) ) {
-
-        $specialization = isset( $_GET['specialization'] ) ? sanitize_text_field( wp_unslash( $_GET['specialization'] ) ) : '';
-        $city           = isset( $_GET['city'] ) ? sanitize_text_field( wp_unslash( $_GET['city'] ) ) : '';
-        $sort           = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : '';
-
-        if ( ! empty( $specialization ) ) {
-            $tax_query = array(
-                'taxonomy' => 'specialization',
-                'field'    => 'slug',
-                'terms'    => $specialization,
-            );
-            $query->set( 'tax_query', array( $tax_query ) );
-        }
-
-        if ( ! empty( $city ) ) {
-            $tax_query = array(
-                'taxonomy' => 'city',
-                'field'    => 'slug',
-                'terms'    => $city,
-            );
-            $query->set( 'tax_query', array( $tax_query ) );
-        }
-
-        $allowed_sorts = array( 'rating_desc', 'price_asc', 'experience_desc' );
-        if ( ! in_array( $sort, $allowed_sorts, true ) ) {
-            $sort = '';
-        }
-
-        switch ( $sort ) {
-            case 'rating_desc':
-                $query->set( 'meta_key', '_doctors_rating' );
-                $query->set( 'orderby', 'meta_value_num' );
-                $query->set( 'order', 'DESC' );
-                break;
-            case 'price_asc':
-                $query->set( 'meta_key', '_doctors_price_from' );
-                $query->set( 'orderby', 'meta_value_num' );
-                $query->set( 'order', 'ASC' );
-                break;
-            case 'experience_desc':
-                $query->set( 'meta_key', '_doctors_experience' );
-                $query->set( 'orderby', 'meta_value_num' );
-                $query->set( 'order', 'DESC' );
-                break;
-            default:
-                $query->set( 'orderby', 'date' );
-                $query->set( 'order', 'DESC' );
-                break;
-        }
-
-        $query->set( 'posts_per_page', 9 );
+    if ( is_admin() || ! $query->is_main_query() ) {
+        return;
     }
+
+    // Check if on doctors archive OR on taxonomy archives for doctors
+    $is_doctors_archive = is_post_type_archive( 'doctors' );
+    $is_specialization_archive = is_tax( 'specialization' );
+    $is_city_archive = is_tax( 'city' );
+
+    if ( ! $is_doctors_archive && ! $is_specialization_archive && ! $is_city_archive ) {
+        return;
+    }
+
+    $specialization = isset( $_GET['specialization'] ) ? sanitize_text_field( wp_unslash( $_GET['specialization'] ) ) : '';
+    $city           = isset( $_GET['city'] ) ? sanitize_text_field( wp_unslash( $_GET['city'] ) ) : '';
+    $sort           = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : '';
+
+    // Get current term from taxonomy archive (if on one)
+    $tax_query = array();
+
+    if ( $is_specialization_archive && empty( $specialization ) ) {
+        $current_spec = get_queried_object();
+        if ( $current_spec && ! is_wp_error( $current_spec ) ) {
+            $specialization = $current_spec->slug;
+        }
+    }
+
+    if ( $is_city_archive && empty( $city ) ) {
+        $current_city = get_queried_object();
+        if ( $current_city && ! is_wp_error( $current_city ) ) {
+            $city = $current_city->slug;
+        }
+    }
+
+    if ( ! empty( $specialization ) ) {
+        $tax_query[] = array(
+            'taxonomy' => 'specialization',
+            'field'    => 'slug',
+            'terms'    => $specialization,
+        );
+    }
+
+    if ( ! empty( $city ) ) {
+        $tax_query[] = array(
+            'taxonomy' => 'city',
+            'field'    => 'slug',
+            'terms'    => $city,
+        );
+    }
+
+    if ( ! empty( $tax_query ) ) {
+        $query->set( 'tax_query', $tax_query );
+    }
+
+    $allowed_sorts = array( 'rating_desc', 'price_asc', 'experience_desc' );
+    if ( ! in_array( $sort, $allowed_sorts, true ) ) {
+        $sort = '';
+    }
+
+    switch ( $sort ) {
+        case 'rating_desc':
+            $query->set( 'meta_key', '_doctors_rating' );
+            $query->set( 'orderby', 'meta_value_num' );
+            $query->set( 'order', 'DESC' );
+            break;
+        case 'price_asc':
+            $query->set( 'meta_key', '_doctors_price_from' );
+            $query->set( 'orderby', 'meta_value_num' );
+            $query->set( 'order', 'ASC' );
+            break;
+        case 'experience_desc':
+            $query->set( 'meta_key', '_doctors_experience' );
+            $query->set( 'orderby', 'meta_value_num' );
+            $query->set( 'order', 'DESC' );
+            break;
+        default:
+            $query->set( 'orderby', 'date' );
+            $query->set( 'order', 'DESC' );
+            break;
+    }
+
+    $query->set( 'posts_per_page', 9 );
 }
 
 add_action( 'pre_get_posts', 'doctors_archive_filters' );
 
 /**
  * Display pagination for doctors archive.
- *
- * Uses the main WordPress query.
  *
  * @since 1.0.0
  * @param string $base_url The base URL for pagination links.
@@ -91,35 +118,48 @@ function doctors_pagination( $base_url = '' ) {
     $current_page = max( 1, get_query_var( 'paged' ) );
     $total_pages  = $wp_query->max_num_pages;
 
+    // Use CPT archive URL as base
     if ( empty( $base_url ) ) {
-        $base_url = get_permalink( get_option( 'page_for_posts' ) );
+        $base_url = get_post_type_archive_link( 'doctors' );
     }
 
-    $get_params = array_map( 'sanitize_text_field', wp_unslash( $_GET ) );
-    unset( $get_params['paged'] );
+    // Get current GET params (filters), sanitize and filter
+    $get_params = array_filter(
+        isset( $_GET ) ? $_GET : array(),
+        function( $key ) {
+            return 'paged' !== $key;
+        },
+        ARRAY_FILTER_USE_KEY
+    );
 
+    // Sanitize values
+    $get_params = array_map( 'sanitize_text_field', $get_params );
+
+    // Build pagination base URL
     if ( ! empty( $get_params ) ) {
         $base_url = add_query_arg( $get_params, $base_url );
     }
-    $base_url = trailingslashit( $base_url ) . '?paged=';
 
     echo '<nav class="doctors-pagination" aria-label="Pagination">';
     echo '<ul class="page-numbers">';
 
     if ( $current_page > 1 ) {
-        echo '<li><a class="prev page-numbers" href="' . esc_url( $base_url . 'paged=' . ( $current_page - 1 ) ) . '">&laquo;</a></li>';
+        $prev_url = add_query_arg( 'paged', $current_page - 1, $base_url );
+        echo '<li><a class="prev page-numbers" href="' . esc_url( $prev_url ) . '">&laquo;</a></li>';
     }
 
     for ( $i = 1; $i <= $total_pages; $i++ ) {
+        $page_url = add_query_arg( 'paged', $i, $base_url );
         if ( $i == $current_page ) {
             echo '<li><span class="page-numbers current">' . esc_html( $i ) . '</span></li>';
         } else {
-            echo '<li><a class="page-numbers" href="' . esc_url( $base_url . 'paged=' . $i ) . '">' . esc_html( $i ) . '</a></li>';
+            echo '<li><a class="page-numbers" href="' . esc_url( $page_url ) . '">' . esc_html( $i ) . '</a></li>';
         }
     }
 
     if ( $current_page < $total_pages ) {
-        echo '<li><a class="next page-numbers" href="' . esc_url( $base_url . 'paged=' . ( $current_page + 1 ) ) . '">&raquo;</a></li>';
+        $next_url = add_query_arg( 'paged', $current_page + 1, $base_url );
+        echo '<li><a class="next page-numbers" href="' . esc_url( $next_url ) . '">&raquo;</a></li>';
     }
 
     echo '</ul>';
@@ -170,10 +210,27 @@ function doctors_get_cities() {
  * @since 1.0.0
  */
 function doctors_render_filters() {
+    // First, check GET parameters (form submission)
     $current_specialization = isset( $_GET['specialization'] ) ? sanitize_text_field( wp_unslash( $_GET['specialization'] ) ) : '';
     $current_city           = isset( $_GET['city'] ) ? sanitize_text_field( wp_unslash( $_GET['city'] ) ) : '';
     $current_sort           = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : '';
 
+    // If on taxonomy archive, get current term (overrides GET if set)
+    if ( is_tax( 'specialization' ) ) {
+        $current_spec_term = get_queried_object();
+        if ( $current_spec_term && ! is_wp_error( $current_spec_term ) ) {
+            $current_specialization = $current_spec_term->slug;
+        }
+    }
+
+    if ( is_tax( 'city' ) ) {
+        $current_city_term = get_queried_object();
+        if ( $current_city_term && ! is_wp_error( $current_city_term ) ) {
+            $current_city = $current_city_term->slug;
+        }
+    }
+
+    // Get all terms (no dynamic filtering)
     $specializations = doctors_get_specializations();
     $cities          = doctors_get_cities();
 

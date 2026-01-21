@@ -105,6 +105,13 @@ get_header();
             </div>
         </div>
 
+        <div class="doctor-archive-link">
+            <a href="<?php echo esc_url( get_post_type_archive_link( 'doctors' ) ); ?>" class="button button-primary">
+                <span class="dashicons dashicons-arrow-left-alt2"></span>
+                <?php esc_html_e( 'Все врачи', 'doctors-plugin' ); ?>
+            </a>
+        </div>
+
     </article>
 </div>
 
